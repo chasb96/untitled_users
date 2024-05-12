@@ -3,30 +3,30 @@ use deadpool::managed::PoolError;
 use sqlx::Error as SqlxError;
 
 #[derive(Debug)]
-pub enum GetError {
+pub enum QueryError {
     Sqlx(SqlxError),
     Pool(PoolError<SqlxError>),
 }
 
-impl Error for GetError { }
+impl Error for QueryError { }
 
-impl Display for GetError {
+impl Display for QueryError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            GetError::Sqlx(e) => write!(f, "Error running query: {}", e),
-            GetError::Pool(e) => write!(f, "Error obtaining connection from pool: {}", e),
+            QueryError::Sqlx(e) => write!(f, "Error running query: {}", e),
+            QueryError::Pool(e) => write!(f, "Error obtaining connection from pool: {}", e),
         }
     }
 }
 
-impl From<PoolError<SqlxError>> for GetError {
+impl From<PoolError<SqlxError>> for QueryError {
     fn from(value: PoolError<SqlxError>) -> Self {
-        GetError::Pool(value)
+        QueryError::Pool(value)
     }
 }
 
-impl From<SqlxError> for GetError {
+impl From<SqlxError> for QueryError {
     fn from(value: SqlxError) -> Self {
-        GetError::Sqlx(value)
+        QueryError::Sqlx(value)
     }
 }

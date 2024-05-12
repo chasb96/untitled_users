@@ -4,4 +4,5 @@ use serde::Serialize;
 pub struct GetUserResponse {
     pub id: i32,
     pub username: String,
+    pub projects: Vec<String>,
 }
