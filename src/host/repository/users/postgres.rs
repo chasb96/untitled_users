@@ -45,14 +45,10 @@ impl UserRepository for PostgresDatabase {
 
     async fn get_by_username(&self, username: &str) -> Result<Option<User>, QueryError> {
         const QUERY: &'static str = r#"
-            SELECT id
-            FROM users
-            WHERE username = $1;
-
-            SELECT project_id
-            FROM user_projects up
-            LEFT JOIN users u ON up.user_id = u.id
-            WHERE u.username = $1;
+            SELECT u.id, project_id
+            FROM users u 
+            LEFT JOIN user_projects up ON u.id = up.user_id
+            WHERE u.username = $1
         "#;
 
         let mut conn = self.connection_pool
@@ -66,8 +62,11 @@ impl UserRepository for PostgresDatabase {
         let mut user = match records.try_next().await? {
             Some(record) => User {
                 id: record.get("id"),
-                username: username.to_owned(),
-                projects: Vec::new(),
+                username: username.to_string(),
+                projects: match record.get("project_id") {
+                    Some(project_id) => vec![project_id],
+                    None => Vec::new(),
+                },
             },
             None => return Ok(None),
         };
