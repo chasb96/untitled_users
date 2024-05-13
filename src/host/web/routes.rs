@@ -24,7 +24,7 @@ pub async fn get_by_id(
         GetUserResponse {
             id: user.id,
             username: user.username,
-            projects: Vec::new(),
+            projects: user.projects,
         }
     ))
 }
@@ -51,20 +51,16 @@ pub async fn get_by_username(
 pub async fn add_project(
     client: ProjectsClient,
     user_repository: UserRepositoryExtractor,
-    Path(user_id): Path<i32>,
+    Path(_user_id): Path<i32>,
     Protobuf(request): Protobuf<ProjectRequest>
 ) -> Result<StatusCode, StatusCode> {
     let project = client
-        .get_project_by_id(request.project_id)
+        .get_project_by_id(&request.project_id)
         .await
         .or_internal_server_error()?;
 
-    if project.user_id != user_id {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
     let user = user_repository
-        .get_by_id(user_id)
+        .get_by_id(project.user_id)
         .await
         .or_internal_server_error()?;
 
