@@ -8,7 +8,7 @@ use crate::host::util::or_status_code::{OrInternalServerError, OrNotFound};
 use crate::host::repository::users::UserRepository;
 
 use super::request::ProjectRequest;
-use super::response::GetUserResponse;
+use super::response::{GetUserResponse, UserProjectResponse};
 
 pub async fn get_by_id(
     user_repository: UserRepositoryExtractor,
@@ -24,7 +24,13 @@ pub async fn get_by_id(
         GetUserResponse {
             id: user.id,
             username: user.username,
-            projects: user.projects,
+            projects: user.projects
+                .into_iter()
+                .map(|project| UserProjectResponse {
+                    project_id: project.project_id,
+                    project_name: project.project_name,
+                })
+                .collect()
         }
     ))
 }
@@ -43,7 +49,13 @@ pub async fn get_by_username(
         GetUserResponse {
             id: user.id,
             username: user.username,
-            projects: Vec::new(),
+            projects: user.projects
+                .into_iter()
+                .map(|project| UserProjectResponse {
+                    project_id: project.project_id,
+                    project_name: project.project_name,
+                })
+                .collect()
         }
     ))
 }
@@ -65,9 +77,9 @@ pub async fn add_project(
         .or_internal_server_error()?;
 
     if let Some(user) = user {
-        if !user.projects.contains(&project.id) {
+        if !user.projects.iter().any(|user_project| &user_project.project_id == &project.id) {
             user_repository
-                .add_project(project.user_id, &project.id)
+                .add_project(project.user_id, &project.id, &project.name)
                 .await
                 .or_internal_server_error()?;
         }
