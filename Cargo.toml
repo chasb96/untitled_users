@@ -18,8 +18,12 @@ host = [
     "dep:sqlx",
     "dep:deadpool",
     "dep:rand",
+    "dep:async-channel",
     "dep:auth",
-    "dep:projects"
+    "dep:projects",
+    "dep:or_status_code",
+    "dep:log_unwrap",
+    "dep:log_layer"
 ]
 client = ["dep:reqwest"]
 
@@ -27,7 +31,7 @@ client = ["dep:reqwest"]
 tokio = { version = "1.36.0", features = ["full"], optional = true }
 tower = { version = "0.4.13", optional = true }
 tower-layer = { version = "0.3.2", optional = true }
-axum = { version = "0.7.4", features = ["multipart"] }
+axum = { version = "0.7.5", features = ["multipart"] }
 axum-extra = { version = "0.9.3", features = ["protobuf"], optional = true }
 log = { version = "0.4.20", optional = true }
 env_logger = { version = "0.11.3", optional = true }
@@ -39,5 +43,9 @@ sqlx = { version = "0.7.3", features = [ "runtime-tokio", "tls-native-tls", "pos
 deadpool = { version = "0.12.0", features = ["managed"], optional = true }
 rand = { version = "0.8.5", optional = true }
 reqwest = { version = "0.12.4", optional = true }
+async-channel = { version = "2.3.1", optional = true }
 auth = { git = "https://github.com/chasb96/untitled_auth", default-features = false, features = ["client"], optional = true }
 projects = { git = "https://github.com/chasb96/untitled_projects", default-features = false, features = ["client"], optional = true }
+or_status_code = { git = "https://github.com/chasb96/or_status_code", optional = true }
+log_unwrap = { git = "https://github.com/chasb96/log_unwrap", optional = true }
+log_layer = { git = "https://github.com/chasb96/log_layer", optional = true }

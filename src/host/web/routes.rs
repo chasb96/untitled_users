@@ -1,9 +1,12 @@
+use auth::client::axum::extractors::{Authenticate, ClaimsUser};
 use axum::extract::Path;
 use axum::{http::StatusCode, Json};
 use axum_extra::protobuf::Protobuf;
 use projects::client::axum::extractors::ProjectsClient;
 
+use crate::host::axum::extractors::metrics_queue::MetricsQueueExtractor;
 use crate::host::axum::extractors::user_repository::UserRepositoryExtractor;
+use crate::host::metrics::UserViewed;
 use crate::host::util::or_status_code::{OrInternalServerError, OrNotFound};
 use crate::host::repository::users::UserRepository;
 
@@ -12,6 +15,8 @@ use super::response::{GetUserResponse, UserProjectResponse};
 
 pub async fn get_by_id(
     user_repository: UserRepositoryExtractor,
+    Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
+    metrics_queue: MetricsQueueExtractor,
     Path(id): Path<i32>
 ) -> Result<Json<GetUserResponse>, StatusCode> {
     let user = user_repository
@@ -19,6 +24,14 @@ pub async fn get_by_id(
         .await
         .or_internal_server_error()?
         .or_not_found()?;
+
+    if claims_user.is_none() || claims_user.unwrap().id != user.id {
+        metrics_queue
+            .send(UserViewed {
+                id: user.id,
+            })
+            .await;
+    } 
 
     Ok(Json(
         GetUserResponse {
@@ -37,6 +50,8 @@ pub async fn get_by_id(
 
 pub async fn get_by_username(
     user_repository: UserRepositoryExtractor,
+    Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
+    metrics_queue: MetricsQueueExtractor,
     Path(username): Path<String>
 ) -> Result<Json<GetUserResponse>, StatusCode> {
     let user = user_repository
@@ -44,6 +59,14 @@ pub async fn get_by_username(
         .await
         .or_internal_server_error()?
         .or_not_found()?;
+
+    if claims_user.is_none() || claims_user.unwrap().id != user.id {
+        metrics_queue
+            .send(UserViewed {
+                id: user.id,
+            })
+            .await;
+    } 
 
     Ok(Json(
         GetUserResponse {

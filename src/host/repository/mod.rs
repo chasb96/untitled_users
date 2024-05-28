@@ -1,4 +1,5 @@
 mod deadpool;
 mod postgres;
-mod error;
+pub mod error;
 pub mod users;
+pub mod metrics;

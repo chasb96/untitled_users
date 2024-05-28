@@ -1,10 +1,9 @@
 use futures::TryStreamExt;
 use sqlx::Row;
 
-use crate::host::repository::postgres::PostgresDatabase;
+use crate::host::repository::{error::QueryError, postgres::PostgresDatabase};
 use crate::host::repository::users::UserProject;
 
-use super::error::QueryError;
 use super::{User, UserRepository};
 
 

@@ -1,9 +1,6 @@
-pub mod error;
 mod postgres;
 
-use self::error::QueryError;
-
-use super::postgres::PostgresDatabase;
+use super::{error::QueryError, postgres::PostgresDatabase};
 
 pub struct User {
     pub id: i32,
