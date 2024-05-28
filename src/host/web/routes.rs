@@ -2,12 +2,12 @@ use auth::client::axum::extractors::{Authenticate, ClaimsUser};
 use axum::extract::Path;
 use axum::{http::StatusCode, Json};
 use axum_extra::protobuf::Protobuf;
+use or_status_code::{OrInternalServerError, OrNotFound};
 use projects::client::axum::extractors::ProjectsClient;
 
 use crate::host::axum::extractors::metrics_queue::MetricsQueueExtractor;
 use crate::host::axum::extractors::user_repository::UserRepositoryExtractor;
 use crate::host::metrics::UserViewed;
-use crate::host::util::or_status_code::{OrInternalServerError, OrNotFound};
 use crate::host::repository::users::UserRepository;
 
 use super::request::ProjectRequest;
