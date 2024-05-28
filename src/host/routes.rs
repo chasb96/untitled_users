@@ -1,5 +1,5 @@
 use axum::{routing::{get, post}, Router};
-use super::web::routes::{add_project, get_by_id, get_by_username};
+use super::web::{add_project, get_by_id, get_by_username};
 
 pub trait UsersRouter {
     fn register_user_routes(self) -> Self;
