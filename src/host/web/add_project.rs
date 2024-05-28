@@ -1,7 +1,7 @@
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum_extra::protobuf::Protobuf;
-use or_status_code::OrInternalServerError;
+use or_status_code::{OrInternalServerError, OrNotFound};
 use projects::client::axum::extractors::ProjectsClient;
 
 use crate::host::axum::extractors::user_repository::UserRepositoryExtractor;
@@ -31,18 +31,15 @@ pub async fn add_project(
     let user = user_repository
         .get_by_id(project.user_id)
         .await
-        .or_internal_server_error()?;
+        .or_internal_server_error()?
+        .or_not_found()?;
 
-    if let Some(user) = user {
-        if !user.projects.iter().any(|user_project| &user_project.project_id == &project.id) {
-            user_repository
-                .add_project(project.user_id, &project.id, &project.name)
-                .await
-                .or_internal_server_error()?;
-        }
-
-        Ok(StatusCode::OK)
-    } else {
-        Err(StatusCode::BAD_REQUEST)
+    if !user.projects.iter().any(|user_project| &user_project.project_id == &project.id) {
+        user_repository
+            .add_project(project.user_id, &project.id, &project.name)
+            .await
+            .or_internal_server_error()?;
     }
+
+    Ok(StatusCode::OK)
 }
