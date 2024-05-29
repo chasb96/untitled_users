@@ -1,4 +1,9 @@
 mod postgres;
+mod period;
+mod ranking;
+
+pub use period::Period;
+pub use ranking::Ranking;
 
 use super::{error::QueryError, postgres::PostgresDatabase};
 
@@ -14,6 +19,8 @@ pub struct UserProject {
 }
 
 pub trait UserRepository {
+    async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError>;
+
     async fn get_by_id(&self, id: i32) -> Result<Option<User>, QueryError>;
 
     async fn get_by_username(&self, username: &str) -> Result<Option<User>, QueryError>;
@@ -26,6 +33,12 @@ pub enum UserRepositoryOption {
 }
 
 impl UserRepository for UserRepositoryOption {
+    async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError> {
+        match self {
+            Self::Postgres(pg) => pg.list(ranking, period, limit).await
+        }
+    }
+
     async fn get_by_id(&self, id: i32) -> Result<Option<User>, QueryError> {
         match self {
             Self::Postgres(pg) => pg.get_by_id(id).await

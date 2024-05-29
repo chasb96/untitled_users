@@ -1,13 +1,44 @@
 use futures::TryStreamExt;
+use sqlx::postgres::PgRow;
 use sqlx::Row;
 
 use crate::host::repository::{error::QueryError, postgres::PostgresDatabase};
 use crate::host::repository::users::UserProject;
 
-use super::{User, UserRepository};
+use super::{Period, Ranking, User, UserRepository};
 
 
 impl UserRepository for PostgresDatabase {
+    async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError> {
+        let ranking: Ranking =  ranking.into();
+        let period: Period = period.into();
+        
+        let query = format!(r#"
+            SELECT u.id, username
+            FROM users u
+                LEFT JOIN user_metrics um
+                    ON u.id = um.user_id
+            WHERE {}
+            ORDER BY {}
+            LIMIT $1
+        "#, period.as_where_clause(), ranking.as_ordering_clause());
+
+        let mut conn = self.connection_pool
+            .get()
+            .await?;
+
+        sqlx::query(&query)
+            .bind(limit)
+            .map(|row: PgRow| User {
+                id: row.get("id"),
+                username: row.get("username"),
+                projects: Vec::new(),
+            })
+            .fetch_all(conn.as_mut())
+            .await
+            .map_err(QueryError::from)
+    }
+
     async fn get_by_id(&self, id: i32) -> Result<Option<User>, QueryError> {
         const QUERY: &'static str = r#"
             SELECT username, project_id, project_name
