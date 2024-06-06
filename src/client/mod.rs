@@ -5,12 +5,14 @@ pub mod axum;
 
 use std::env;
 use prost::Message;
-use request::CreateUserRequest;
 use reqwest::{header::{ACCEPT, CONTENT_TYPE}, Client};
 
 pub use request::ProjectRequest;
+pub use request::CreateUserRequest;
+pub use response::CreateUserResponse;
+pub use response::SearchResponse;
+pub use response::SearchRecord;
 pub use error::Error;
-use response::{CreateUserResponse, SearchResponse};
 
 pub struct UsersClient {
     http_client: Client,
