@@ -29,10 +29,10 @@ impl SearchRepository for PostgresDatabase {
 
     async fn query(&self, terms: Vec<&str>) -> Result<Vec<SearchRecord>, QueryError> {
         const SEARCH_QUERY: &'static str = r#"
-            SELECT s.user_id as uid, s.username as u, levenshtein(s.username, q.value) AS d
+            SELECT s.user_id as uid, s.username as u, s.username <-> q.value AS s
             FROM (SELECT p as value, DMETAPHONE(p) AS code FROM UNNEST($1) as query(p)) as q
             JOIN users_search s 
-            ON s.code = q.code OR levenshtein_less_equal(s.username, q.value, 2) <= 2
+            ON s.username % q.value OR s.code = q.value
         "#;
 
         let mut conn = self.connection_pool
@@ -44,12 +44,7 @@ impl SearchRepository for PostgresDatabase {
             .map(|row: PgRow| (
                 row.get("uid"),
                 row.get("u"),
-                row.get::<i32, &str>("d"),
-            ))
-            .map(|row| (
-                row.0,
-                row.1,
-                1.0 / (1.0 + row.2 as f32),
+                1. - row.get::<f32, &str>("s"),
             ))
             .fetch(conn.as_mut());
 
@@ -67,7 +62,7 @@ impl SearchRepository for PostgresDatabase {
 
         let mut rows: Vec<SearchRecord> = rows.into_values().collect();
 
-        rows.sort_by(|l, r| l.score.total_cmp(&r.score));
+        rows.sort_by(|l, r| r.score.total_cmp(&l.score));
         rows.truncate(32);
 
         Ok(rows)
