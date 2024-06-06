@@ -5,11 +5,12 @@ pub mod axum;
 
 use std::env;
 use prost::Message;
+use request::CreateUserRequest;
 use reqwest::{header::{ACCEPT, CONTENT_TYPE}, Client};
 
 pub use request::ProjectRequest;
 pub use error::Error;
-use response::SearchResponse;
+use response::{CreateUserResponse, SearchResponse};
 
 pub struct UsersClient {
     http_client: Client,
@@ -22,6 +23,20 @@ impl UsersClient {
             http_client,
             base_url,
         }
+    }
+
+    pub async fn create_user(&self, request: CreateUserRequest) -> Result<CreateUserResponse, Error> {
+        let response = self.http_client
+            .post(format!("{}/users", self.base_url))
+            .header(CONTENT_TYPE, "application/octet-stream")
+            .body(request.encode_to_vec())
+            .send()
+            .await?
+            .error_for_status()?
+            .bytes()
+            .await?;
+
+        Ok(CreateUserResponse::decode(response)?)
     }
 
     pub async fn add_project(&self, user_id: i32, request: ProjectRequest) -> Result<(), Error> {

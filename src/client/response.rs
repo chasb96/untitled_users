@@ -15,3 +15,9 @@ pub struct SearchRecord {
     #[prost(float, tag = "3")]
     pub score: f32,
 }
+
+#[derive(Message)]
+pub struct CreateUserResponse {
+    #[prost(int32, tag = "1")]
+    pub id: i32,
+}
