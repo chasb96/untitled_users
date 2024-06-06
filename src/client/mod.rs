@@ -1,13 +1,15 @@
 mod request;
+mod response;
 mod error;
 pub mod axum;
 
 use std::env;
 use prost::Message;
-use reqwest::{header::CONTENT_TYPE, Client};
+use reqwest::{header::{ACCEPT, CONTENT_TYPE}, Client};
 
 pub use request::ProjectRequest;
 pub use error::Error;
+use response::SearchResponse;
 
 pub struct UsersClient {
     http_client: Client,
@@ -31,6 +33,19 @@ impl UsersClient {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn search(&self, query: &str) -> Result<SearchResponse, Error> {
+        let response = self.http_client
+            .get(format!("{}/users/search?query={}", self.base_url, query))
+            .header(ACCEPT, "application/octet-stream")
+            .send()
+            .await?
+            .error_for_status()?
+            .bytes()
+            .await?;
+
+        Ok(SearchResponse::decode(response)?)
     }
 }
 

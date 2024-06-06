@@ -4,9 +4,9 @@ use axum::{http::StatusCode, Json};
 use or_status_code::{OrInternalServerError, OrNotFound};
 use serde::Serialize;
 
-use crate::host::axum::extractors::metrics_queue::MetricsQueueExtractor;
+use crate::host::axum::extractors::message_queue::MessageQueueExtractor;
 use crate::host::axum::extractors::user_repository::UserRepositoryExtractor;
-use crate::host::metrics::UserViewed;
+use crate::host::message_queue::UserViewed;
 use crate::host::repository::users::UserRepository;
 
 #[derive(Serialize)]
@@ -25,7 +25,7 @@ pub struct UserProjectResponse {
 pub async fn get_by_id(
     user_repository: UserRepositoryExtractor,
     Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
-    metrics_queue: MetricsQueueExtractor,
+    message_queue: MessageQueueExtractor,
     Path(id): Path<i32>
 ) -> Result<Json<GetUserResponse>, StatusCode> {
     let user = user_repository
@@ -35,7 +35,7 @@ pub async fn get_by_id(
         .or_not_found()?;
 
     if claims_user.is_none() || claims_user.unwrap().id != user.id {
-        metrics_queue
+        message_queue
             .send(UserViewed {
                 id: user.id,
             })
@@ -60,7 +60,7 @@ pub async fn get_by_id(
 pub async fn get_by_username(
     user_repository: UserRepositoryExtractor,
     Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
-    metrics_queue: MetricsQueueExtractor,
+    metrics_queue: MessageQueueExtractor,
     Path(username): Path<String>
 ) -> Result<Json<GetUserResponse>, StatusCode> {
     let user = user_repository

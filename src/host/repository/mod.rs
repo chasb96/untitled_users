@@ -3,3 +3,4 @@ mod postgres;
 pub mod error;
 pub mod users;
 pub mod metrics;
+pub mod search;

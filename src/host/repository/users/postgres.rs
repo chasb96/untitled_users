@@ -9,6 +9,26 @@ use super::{Period, Ranking, User, UserRepository};
 
 
 impl UserRepository for PostgresDatabase {
+    async fn create(&self, username: &str) -> Result<i32, QueryError> {
+        const INSERT_QUERY: &'static str = r#"
+            INSERT INTO users (username, password_hash)
+            VALUES ($1, '')
+            RETURNING id
+        "#;
+
+        let mut conn = self.connection_pool
+            .get()
+            .await?;
+
+        let id = sqlx::query(INSERT_QUERY)
+            .bind(username)
+            .map(|row: PgRow| row.get("id"))
+            .fetch_one(conn.as_mut())
+            .await?;
+
+        Ok(id)
+    }
+
     async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError> {
         let ranking: Ranking =  ranking.into();
         let period: Period = period.into();

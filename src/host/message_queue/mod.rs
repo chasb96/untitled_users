@@ -5,8 +5,10 @@ use std::sync::OnceLock;
 use log::error;
 pub use message::Message;
 pub use message::user_viewed::UserViewed;
+pub use message::user_created::UserCreated;
 
 use async_channel::{Receiver, Sender};
+use message::Queueable;
 use tokio::{spawn, task::JoinHandle};
 
 static MESSAGE_QUEUE: OnceLock<MessageQueue> = OnceLock::new();
@@ -40,7 +42,9 @@ impl MessageQueueConsumer {
         Self(spawn(async move {
             loop {
                 match receiver.recv().await {
-                    Ok(message) => message.handle().await.unwrap_or_else(|e| error!("Error handling message: {}", e)),
+                    Ok(message) => if let Err(e) = message.handle().await {
+                        error!("Error handling message: {}", e)
+                    }
                     Err(e) => error!("Error receiving message: {}", e),
                 };
             }

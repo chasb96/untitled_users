@@ -19,6 +19,8 @@ pub struct UserProject {
 }
 
 pub trait UserRepository {
+    async fn create(&self, username: &str) -> Result<i32, QueryError>;
+
     async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError>;
 
     async fn get_by_id(&self, id: i32) -> Result<Option<User>, QueryError>;
@@ -33,6 +35,12 @@ pub enum UserRepositoryOption {
 }
 
 impl UserRepository for UserRepositoryOption {
+    async fn create(&self, username: &str) -> Result<i32, QueryError> {
+        match self {
+            Self::Postgres(pg) => pg.create(username).await
+        }
+    }
+    
     async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError> {
         match self {
             Self::Postgres(pg) => pg.list(ranking, period, limit).await
