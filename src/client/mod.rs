@@ -54,7 +54,7 @@ impl UsersClient {
 
     pub async fn search(&self, query: &str) -> Result<SearchResponse, Error> {
         let response = self.http_client
-            .get(format!("{}/users/search?query={}", self.base_url, query))
+            .get(format!("{}/users/search?q={}", self.base_url, query))
             .header(ACCEPT, "application/octet-stream")
             .send()
             .await?
