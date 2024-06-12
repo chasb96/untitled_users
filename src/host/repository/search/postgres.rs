@@ -30,9 +30,9 @@ impl SearchRepository for PostgresDatabase {
     async fn query(&self, terms: Vec<&str>) -> Result<Vec<SearchRecord>, QueryError> {
         const SEARCH_QUERY: &'static str = r#"
             SELECT s.user_id as uid, s.username as u, s.username <-> q.value AS s
-            FROM (SELECT p as value, DMETAPHONE(p) AS code FROM UNNEST($1) as query(p)) as q
+            FROM UNNEST($1) as q(value)
             JOIN users_search s 
-            ON s.username % q.value OR s.code = q.value
+            ON s.username % q.value
         "#;
 
         let mut conn = self.connection_pool
