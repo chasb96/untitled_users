@@ -1,6 +1,7 @@
 use axum::Json;
 use axum::{extract::Query, response::IntoResponse};
 use or_status_code::OrInternalServerError;
+use prost::Message;
 use serde::{Deserialize, Serialize};
 
 use crate::host::axum::extractors::user_repository::UserRepositoryExtractor;
@@ -14,17 +15,20 @@ pub struct ListUsersQuery {
     user_ids: Option<Vec<i32>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Message)]
 pub struct ListUsersResponse {
     #[serde(rename = "u")]
+    #[prost(message, repeated, tag = "1")]
     users: Vec<UserResponse>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Message)]
 pub struct UserResponse {
     #[serde(rename = "id")]
+    #[prost(int32, tag = "1")]
     id: i32,
     #[serde(rename = "u")]
+    #[prost(string, tag = "2")]
     username: String,
 }
 
