@@ -21,3 +21,17 @@ pub struct CreateUserResponse {
     #[prost(int32, tag = "1")]
     pub id: i32,
 }
+
+#[derive(Message)]
+pub struct ListUsersResponse {
+    #[prost(message, repeated, tag = "1")]
+    users: Vec<UserResponse>,
+}
+
+#[derive(Message)]
+pub struct UserResponse {
+    #[prost(int32, tag = "1")]
+    id: i32,
+    #[prost(string, tag = "2")]
+    username: String,
+}

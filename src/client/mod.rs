@@ -10,6 +10,7 @@ use reqwest::{header::{ACCEPT, CONTENT_TYPE}, Client};
 pub use request::ProjectRequest;
 pub use request::CreateUserRequest;
 pub use response::CreateUserResponse;
+use response::ListUsersResponse;
 pub use response::SearchResponse;
 pub use response::SearchRecord;
 pub use error::Error;
@@ -25,6 +26,20 @@ impl UsersClient {
             http_client,
             base_url,
         }
+    }
+
+    pub async fn list_users(&self, user_ids: Option<Vec<i32>>) -> Result<ListUsersResponse, Error> {
+        let response = self.http_client
+            .get(format!("{}/users", self.base_url))
+            .query(&[("uids", user_ids)])
+            .header(ACCEPT, "application/octet-stream")
+            .send()
+            .await?
+            .error_for_status()?
+            .bytes()
+            .await?;
+
+        Ok(response::ListUsersResponse::decode(response)?)
     }
 
     pub async fn create_user(&self, request: CreateUserRequest) -> Result<CreateUserResponse, Error> {
