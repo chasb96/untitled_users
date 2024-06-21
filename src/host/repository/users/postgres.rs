@@ -5,8 +5,7 @@ use sqlx::Row;
 use crate::host::repository::{error::QueryError, postgres::PostgresDatabase};
 use crate::host::repository::users::UserProject;
 
-use super::{Period, Ranking, User, UserRepository};
-
+use super::{User, UserRepository};
 
 impl UserRepository for PostgresDatabase {
     async fn create(&self, username: &str) -> Result<i32, QueryError> {
@@ -29,26 +28,19 @@ impl UserRepository for PostgresDatabase {
         Ok(id)
     }
 
-    async fn list(&self, ranking: impl Into<Ranking>, period: impl Into<Period>, limit: i32) -> Result<Vec<User>, QueryError> {
-        let ranking: Ranking =  ranking.into();
-        let period: Period = period.into();
-        
-        let query = format!(r#"
+    async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError> {
+        const LIST_QUERY: &'static str = r#"
             SELECT u.id, username
             FROM users u
-                LEFT JOIN user_metrics um
-                    ON u.id = um.user_id
-            WHERE {}
-            ORDER BY {}
-            LIMIT $1
-        "#, period.as_where_clause(), ranking.as_ordering_clause());
+            WHERE $1 IS NULL OR u.id = ANY($1)
+        "#;
 
         let mut conn = self.connection_pool
             .get()
             .await?;
 
-        sqlx::query(&query)
-            .bind(limit)
+        sqlx::query(LIST_QUERY)
+            .bind(user_ids)
             .map(|row: PgRow| User {
                 id: row.get("id"),
                 username: row.get("username"),

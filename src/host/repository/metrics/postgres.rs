@@ -1,4 +1,7 @@
-use crate::host::repository::{error::QueryError, postgres::PostgresDatabase};
+use sqlx::postgres::PgRow;
+use sqlx::Row;
+
+use crate::host::repository::{error::QueryError, metrics::User, postgres::PostgresDatabase};
 
 use super::MetricsRepository;
 
@@ -22,5 +25,31 @@ impl MetricsRepository for PostgresDatabase {
             .map_err(QueryError::from)?;
 
         Ok(())
+    }
+    
+    async fn popular(&self, limit: i32) -> Result<Vec<User>, QueryError> {
+        const POPULAR_QUERY: &'static str = r#"
+            SELECT u.id, u.username, um.view_count
+            FROM users u
+                LEFT JOIN user_metrics um
+                    ON u.id = um.user_id
+            ORDER BY um.view_count DESC NULLS LAST
+            LIMIT $1
+        "#;
+
+        let mut conn = self.connection_pool
+            .get()
+            .await?;
+
+        sqlx::query(POPULAR_QUERY)
+            .bind(limit)
+            .map(|row: PgRow| User {
+                id: row.get("id"),
+                username: row.get("username"),
+                score: row.get("view_count"),
+            })
+            .fetch_all(conn.as_mut())
+            .await
+            .map_err(QueryError::from)
     }
 }
