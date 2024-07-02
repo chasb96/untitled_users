@@ -17,8 +17,8 @@ impl Default for RedisCache {
         Self {
             connection_pool: REDIS_CLIENT
                 .get_or_init(|| {
-                    let base_url = env::var("USERS_BASE_URL")
-                        .unwrap_or("http://users".to_string())
+                    let base_url = env::var("REDIS_BASE_URL")
+                        .unwrap_or("redis://redis-cache:6379".to_string())
                         .trim_end_matches('/')
                         .to_string();
 

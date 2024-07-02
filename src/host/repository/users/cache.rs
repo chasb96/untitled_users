@@ -63,7 +63,7 @@ where
         }
 
         if let Some(user) = self.repository.get_by_username(username).await? {
-            let _: () = conn.set(username, user.encode_to_vec()).await?;
+            let _: () = conn.set(cache_key, user.encode_to_vec()).await?;
 
             return Ok(Some(user))
         }
@@ -74,7 +74,26 @@ where
     async fn add_project(&self, user_id: i32, project_id: &str, project_name: &str) -> Result<(), QueryError> {
         self.repository
             .add_project(user_id, project_id, project_name)
-            .await
+            .await?;
+
+        let user = self.repository
+            .get_by_id(user_id)
+            .await?;
+
+        let user = match user {
+            Some(user) => user,
+            None => return Ok(()),
+        };
+
+        let mut conn = self.cache
+            .connection_pool
+            .get()
+            .await?;
+
+        let _: () = conn.del(format!("user:{}", user.username)).await?;
+        let _: () = conn.del(format!("user:{}", user.id)).await?;
+
+        Ok(())
     }
 }
 

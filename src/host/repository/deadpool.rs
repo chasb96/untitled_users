@@ -1,4 +1,4 @@
-use deadpool::managed::{Manager, RecycleResult, Metrics};
+use deadpool::managed::{Manager, Metrics, RecycleError, RecycleResult};
 use redis::{aio::MultiplexedConnection, Client, RedisError};
 use sqlx::{PgConnection, Error, Connection};
 
@@ -20,7 +20,7 @@ impl Manager for PostgresConnectionManager {
 }
 
 pub struct RedisConnectionManager {
-    pub client: Client
+    pub client: Client,
 }
 
 impl Manager for RedisConnectionManager {
@@ -33,7 +33,10 @@ impl Manager for RedisConnectionManager {
             .await
     }
     
-    async fn recycle(&self, _: &mut MultiplexedConnection, _: &Metrics) -> RecycleResult<Self::Error> {
-        Ok(())
+    async fn recycle(&self, conn: &mut MultiplexedConnection, _: &Metrics) -> RecycleResult<Self::Error> {
+        redis::cmd("PING")
+            .query_async(conn)
+            .await
+            .map_err(|_| RecycleError::message("Failed to ping redis"))
     }
 }
