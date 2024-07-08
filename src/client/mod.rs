@@ -28,7 +28,7 @@ impl UsersClient {
         }
     }
 
-    pub async fn list_users(&self, user_ids: Option<Vec<i32>>) -> Result<ListUsersResponse, Error> {
+    pub async fn list_users(&self, user_ids: Option<Vec<String>>) -> Result<ListUsersResponse, Error> {
         let response = self.http_client
             .get(format!("{}/users", self.base_url))
             .query(&[("uids", user_ids)])
@@ -56,7 +56,7 @@ impl UsersClient {
         Ok(CreateUserResponse::decode(response)?)
     }
 
-    pub async fn add_project(&self, user_id: i32, request: ProjectRequest) -> Result<(), Error> {
+    pub async fn add_project(&self, user_id: String, request: ProjectRequest) -> Result<(), Error> {
         self.http_client
             .post(format!("{}/users/{}/projects", self.base_url, user_id))
             .header(CONTENT_TYPE, "application/octet-stream")

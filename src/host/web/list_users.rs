@@ -25,8 +25,8 @@ pub struct ListUsersResponse {
 #[derive(Serialize, Message)]
 pub struct UserResponse {
     #[serde(rename = "id")]
-    #[prost(int32, tag = "1")]
-    id: i32,
+    #[prost(string, tag = "1")]
+    id: String,
     #[serde(rename = "u")]
     #[prost(string, tag = "2")]
     username: String,

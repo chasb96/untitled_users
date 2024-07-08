@@ -3,14 +3,14 @@ use crate::host::{axum::extractors::search_repository::SearchRepositoryExtractor
 use super::{error::HandleError, Message};
 
 pub struct UserCreated {
-    pub id: i32,
+    pub id: String,
     pub username: String,
 }
 
 impl UserCreated {
     pub async fn handle(&self) -> Result<(), HandleError> {
         SearchRepositoryExtractor::default()
-            .create(self.id, &self.username)
+            .create(&self.id, &self.username)
             .await
             .map_err(HandleError::from)
     }

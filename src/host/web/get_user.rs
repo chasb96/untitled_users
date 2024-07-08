@@ -11,7 +11,7 @@ use crate::host::repository::users::UserRepository;
 
 #[derive(Serialize)]
 pub struct GetUserResponse {
-    pub id: i32,
+    pub id: String,
     pub username: String,
     pub projects: Vec<UserProjectResponse>,
 }
@@ -26,18 +26,18 @@ pub async fn get_by_id(
     user_repository: UserRepositoryExtractor,
     Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
     message_queue: MessageQueueExtractor,
-    Path(id): Path<i32>
+    Path(id): Path<String>
 ) -> Result<Json<GetUserResponse>, StatusCode> {
     let user = user_repository
-        .get_by_id(id)
+        .get_by_id(&id)
         .await
         .or_internal_server_error()?
         .or_not_found()?;
 
-    if claims_user.is_none() || claims_user.unwrap().id != user.id {
+    if claims_user.is_none() || claims_user.unwrap().id != user.id.clone() {
         message_queue
             .send(UserViewed {
-                id: user.id,
+                id: user.id.clone(),
             })
             .await;
     } 
@@ -69,10 +69,10 @@ pub async fn get_by_username(
         .or_internal_server_error()?
         .or_not_found()?;
 
-    if claims_user.is_none() || claims_user.unwrap().id != user.id {
+    if claims_user.is_none() || claims_user.unwrap().id != user.id.clone() {
         metrics_queue
             .send(UserViewed {
-                id: user.id,
+                id: user.id.clone(),
             })
             .await;
     } 

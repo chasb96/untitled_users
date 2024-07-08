@@ -6,7 +6,7 @@ use crate::host::repository::{error::QueryError, metrics::User, postgres::Postgr
 use super::MetricsRepository;
 
 impl MetricsRepository for PostgresDatabase {
-    async fn increment_view_count(&self, user_id: i32) -> Result<(), QueryError> {
+    async fn increment_view_count(&self, user_id: &str) -> Result<(), QueryError> {
         const INCREMENT_QUERY: &'static str = r#"
             INSERT INTO user_metrics (user_id, view_count)
             VALUES ($1, 1)
@@ -46,7 +46,7 @@ impl MetricsRepository for PostgresDatabase {
             .map(|row: PgRow| User {
                 id: row.get("id"),
                 username: row.get("username"),
-                score: row.get("view_count"),
+                score: row.get::<Option<i32>, _>("view_count").unwrap_or(0),
             })
             .fetch_all(conn.as_mut())
             .await

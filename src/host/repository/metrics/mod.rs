@@ -1,12 +1,14 @@
 mod postgres;
 mod cache;
+mod mongo;
 
 use cache::MetricsCachingRepository;
 use prost::Message;
+use serde::Deserialize;
 
-use super::{error::QueryError, postgres::PostgresDatabase};
+use super::{error::QueryError, mongo::MongoDatabase, postgres::PostgresDatabase};
 
-#[derive(Clone, Message)]
+#[derive(Clone, Deserialize, Message)]
 pub struct User {
     #[prost(int32, tag = "1")]
     pub id: i32,
@@ -17,7 +19,7 @@ pub struct User {
 }
 
 pub trait MetricsRepository {
-    async fn increment_view_count(&self, user_id: i32) -> Result<(), QueryError>;
+    async fn increment_view_count(&self, user_id: &str) -> Result<(), QueryError>;
 
     async fn popular(&self, limit: i32) -> Result<Vec<User>, QueryError>;
 }
@@ -26,20 +28,23 @@ pub trait MetricsRepository {
 pub enum MetricsRepositoryOption {
     Postgres(PostgresDatabase),
     CachedPostgres(MetricsCachingRepository<PostgresDatabase>),
+    Mongo(MongoDatabase),
 }
 
 impl MetricsRepository for MetricsRepositoryOption {
-    async fn increment_view_count(&self, user_id: i32) -> Result<(), QueryError> {
+    async fn increment_view_count(&self, user_id: &str) -> Result<(), QueryError> {
         match self {
-            MetricsRepositoryOption::Postgres(postgres) => postgres.increment_view_count(user_id).await,
-            MetricsRepositoryOption::CachedPostgres(cached_postgres) => cached_postgres.increment_view_count(user_id).await,
+            Self::Postgres(postgres) => postgres.increment_view_count(user_id).await,
+            Self::CachedPostgres(cached_postgres) => cached_postgres.increment_view_count(user_id).await,
+            Self::Mongo(mongo) => mongo.increment_view_count(user_id).await,
         }
     }
     
     async fn popular(&self, limit: i32) -> Result<Vec<User>, QueryError> {
         match self {
-            MetricsRepositoryOption::Postgres(postgres) => postgres.popular(limit).await,
-            MetricsRepositoryOption::CachedPostgres(cached_postgres) => cached_postgres.popular(limit).await,
+            Self::Postgres(postgres) => postgres.popular(limit).await,
+            Self::CachedPostgres(cached_postgres) => cached_postgres.popular(limit).await,
+            Self::Mongo(mongo) => mongo.popular(limit).await,
         }
     }
 }

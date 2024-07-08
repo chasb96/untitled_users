@@ -20,7 +20,7 @@ impl<T> MetricsRepository for MetricsCachingRepository<T>
 where   
     T: MetricsRepository,
 {
-    async fn increment_view_count(&self, user_id: i32) -> Result<(), QueryError> {
+    async fn increment_view_count(&self, user_id: &str) -> Result<(), QueryError> {
         self.repository
             .increment_view_count(user_id)
             .await

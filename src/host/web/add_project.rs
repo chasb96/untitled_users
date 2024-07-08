@@ -20,7 +20,7 @@ pub struct ProjectRequest {
 pub async fn add_project(
     client: ProjectsClient,
     user_repository: UserRepositoryExtractor,
-    Path(_user_id): Path<i32>,
+    Path(_user_id): Path<String>,
     Protobuf(request): Protobuf<ProjectRequest>
 ) -> Result<StatusCode, StatusCode> {
     let project = client
@@ -29,14 +29,14 @@ pub async fn add_project(
         .or_internal_server_error()?;
 
     let user = user_repository
-        .get_by_id(project.user_id)
+        .get_by_id(&project.user_id)
         .await
         .or_internal_server_error()?
         .or_not_found()?;
 
     if !user.projects.iter().any(|user_project| &user_project.project_id == &project.id) {
         user_repository
-            .add_project(project.user_id, &project.id, &project.name)
+            .add_project(&project.user_id, &project.id, &project.name)
             .await
             .or_internal_server_error()?;
     }

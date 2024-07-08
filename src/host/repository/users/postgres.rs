@@ -5,13 +5,13 @@ use sqlx::Row;
 use crate::host::repository::{error::QueryError, postgres::PostgresDatabase};
 use crate::host::repository::users::UserProject;
 
-use super::{User, UserRepository};
+use super::{NewUser, User, UserRepository};
 
 impl UserRepository for PostgresDatabase {
-    async fn create(&self, username: &str) -> Result<i32, QueryError> {
+    async fn create<'a>(&self, user: NewUser<'a>) -> Result<(), QueryError> {
         const INSERT_QUERY: &'static str = r#"
-            INSERT INTO users (username, password_hash)
-            VALUES ($1, '')
+            INSERT INTO users (id, username, password_hash)
+            VALUES ($1, $2, '')
             RETURNING id
         "#;
 
@@ -20,7 +20,8 @@ impl UserRepository for PostgresDatabase {
             .await?;
 
         let id = sqlx::query(INSERT_QUERY)
-            .bind(username)
+            .bind(user.id)
+            .bind(user.username)
             .map(|row: PgRow| row.get("id"))
             .fetch_one(conn.as_mut())
             .await?;
@@ -51,7 +52,7 @@ impl UserRepository for PostgresDatabase {
             .map_err(QueryError::from)
     }
 
-    async fn get_by_id(&self, id: i32) -> Result<Option<User>, QueryError> {
+    async fn get_by_id(&self, id: &str) -> Result<Option<User>, QueryError> {
         const QUERY: &'static str = r#"
             SELECT username, project_id, project_name
             FROM users u 
@@ -69,7 +70,7 @@ impl UserRepository for PostgresDatabase {
 
         let mut user = match records.try_next().await? {
             Some(record) => User {
-                id,
+                id: id.to_string().clone(),
                 username: record.get("username"),
                 projects: match (record.get("project_id"), record.get("project_name")) {
                     (Some(project_id), Some(project_name)) => vec![UserProject {
@@ -133,7 +134,7 @@ impl UserRepository for PostgresDatabase {
         Ok(Some(user))
     }
     
-    async fn add_project(&self, user_id: i32, project_id: &str, project_name: &str) -> Result<(), QueryError> {
+    async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError> {
         const INSERT_QUERY: &'static str = r#"
             INSERT INTO user_projects (user_id, project_id, project_name)
             VALUES ($1, $2, $3)

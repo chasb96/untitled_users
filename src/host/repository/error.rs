@@ -3,6 +3,7 @@ use deadpool::managed::PoolError;
 use prost::DecodeError;
 use redis::RedisError;
 use sqlx::Error as SqlxError;
+use mongodb::{bson, error::Error as MongoError};
 
 #[derive(Debug)]
 pub enum QueryError {
@@ -11,6 +12,9 @@ pub enum QueryError {
     RedisPool(PoolError<RedisError>),
     ProtobufDecode(DecodeError),
     Redis(RedisError),
+    Mongo(MongoError),
+    Bson(bson::de::Error),
+    MongoPool(PoolError<MongoError>),
 }
 
 impl Error for QueryError { }
@@ -23,6 +27,9 @@ impl Display for QueryError {
             QueryError::RedisPool(e) => write!(f, "Error obtaining connection from redis pool: {}", e),
             QueryError::ProtobufDecode(e) => write!(f, "Error decoding protobuf: {}", e),
             QueryError::Redis(e) => write!(f, "Error accessing cache: {}", e),
+            QueryError::Mongo(e) => write!(f, "Error accessing mongo: {}", e),
+            QueryError::Bson(e) => write!(f, "Error decoding bson: {}", e),
+            QueryError::MongoPool(e) => write!(f, "Error obtaining connection from mongo pool: {}", e),
         }
     }
 }
@@ -54,5 +61,23 @@ impl From<DecodeError> for QueryError {
 impl From<RedisError> for QueryError {
     fn from(value: RedisError) -> Self {
         QueryError::Redis(value)
+    }
+}
+
+impl From<MongoError> for QueryError {
+    fn from(value: MongoError) -> Self {
+        QueryError::Mongo(value)
+    }
+}
+
+impl From<PoolError<MongoError>> for QueryError {
+    fn from(value: PoolError<MongoError>) -> Self {
+        QueryError::MongoPool(value)
+    }
+}
+
+impl From<bson::de::Error> for QueryError {
+    fn from(value: bson::de::Error) -> Self {
+        QueryError::Bson(value)
     }
 }

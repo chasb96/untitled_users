@@ -3,13 +3,13 @@ use crate::host::repository::metrics::{MetricsRepository, MetricsRepositoryOptio
 use super::{error::HandleError, Message};
 
 pub struct UserViewed {
-    pub id: i32,
+    pub id: String,
 }
 
 impl UserViewed {
     pub async fn handle(&self) -> Result<(), HandleError> {
         MetricsRepositoryOption::default()
-            .increment_view_count(self.id)
+            .increment_view_count(&self.id)
             .await
             .map_err(HandleError::from)
     }

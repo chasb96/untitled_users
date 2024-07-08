@@ -8,7 +8,7 @@ use crate::host::repository::{error::QueryError, postgres::PostgresDatabase};
 use super::{SearchRecord, SearchRepository};
 
 impl SearchRepository for PostgresDatabase {
-    async fn create(&self, user_id: i32, username: &str) -> Result<(), QueryError> {
+    async fn create(&self, user_id: &str, username: &str) -> Result<(), QueryError> {
         const INSERT_QUERY: &'static str = r#"
             INSERT INTO users_search (user_id, username, code)
             VALUES ($1, $2, DMETAPHONE($2))

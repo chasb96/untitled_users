@@ -4,6 +4,8 @@ use redis::AsyncCommands;
 
 use crate::host::repository::{error::QueryError, redis::RedisCache, users::{User, UserRepository}};
 
+use super::NewUser;
+
 pub struct UserCachingRepository<T> {
     cache: RedisCache,
     repository: T,
@@ -13,9 +15,9 @@ impl<T> UserRepository for UserCachingRepository<T>
 where   
     T: UserRepository,
 {
-    async fn create(&self, username: &str) -> Result<i32, QueryError> {
+    async fn create<'a>(&self, user: NewUser<'a>) -> Result<(), QueryError> {
         self.repository
-            .create(username)
+            .create(user)
             .await
     }
 
@@ -25,7 +27,7 @@ where
             .await
     }
 
-    async fn get_by_id(&self, id: i32) -> Result<Option<User>, QueryError> {
+    async fn get_by_id(&self, id: &str) -> Result<Option<User>, QueryError> {
         let cache_key = format!("user:{}", id);
 
         let mut conn = self.cache
@@ -71,7 +73,7 @@ where
         Ok(None)
     }
 
-    async fn add_project(&self, user_id: i32, project_id: &str, project_name: &str) -> Result<(), QueryError> {
+    async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError> {
         self.repository
             .add_project(user_id, project_id, project_name)
             .await?;
