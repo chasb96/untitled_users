@@ -29,3 +29,8 @@ spec:
             secretKeyRef:
               name: users-database-connection-string
               key: database_url
+        - name: USERS_DATABASE_NAME
+          value: users
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
