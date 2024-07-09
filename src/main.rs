@@ -1,4 +1,4 @@
-use users::{self, host::router};
+use users::{self, router};
 
 use std::{env, error::Error};
 use axum::serve;
