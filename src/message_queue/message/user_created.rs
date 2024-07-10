@@ -1,4 +1,4 @@
-use crate::{axum::extractors::search_repository::SearchRepositoryExtractor, repository::search::SearchRepository};
+use search_client::{CreateUserRequest, SearchClient};
 
 use super::{error::HandleError, Message};
 
@@ -9,8 +9,15 @@ pub struct UserCreated {
 
 impl UserCreated {
     pub async fn handle(&self) -> Result<(), HandleError> {
-        SearchRepositoryExtractor::default()
-            .create(&self.id, &self.username)
+        SearchClient::default()
+            .create_user(CreateUserRequest {
+                user_id: self.id
+                    .to_string()
+                    .clone(),
+                username: self.username
+                    .to_string()
+                    .clone(),
+            })
             .await
             .map_err(HandleError::from)
     }
