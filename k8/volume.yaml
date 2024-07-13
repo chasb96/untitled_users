@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: users-mongo-storage-volume
+  name: users-mongo-volume
 spec:
   accessModes:
   - ReadWriteMany

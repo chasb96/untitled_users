@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: users_mongo
+  name: users-mongo
   labels:
-    app: users_mongo
+    app: users-mongo
 spec:
   ports:
   - port: 27017
     targetPort: 27017
     protocol: TCP
   selector:
-    app: users_mongo
+    app: users-mongo

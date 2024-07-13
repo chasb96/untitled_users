@@ -1,27 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: users_mongo
+  name: users-mongo
 spec:
   replicas: 1
   revisionHistoryLimit: 0
   selector:
     matchLabels:
-      app: users_mongo
+      app: users-mongo
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
+    type: Recreate
   template:
     metadata:
       labels:
-        app: users_mongo
+        app: users-mongo
     spec:
       containers:
-      - name: users_mongo
+      - name: users-mongo
         image: mongo:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 27017
         env:
@@ -35,3 +32,10 @@ spec:
             secretKeyRef:
               name: mongo-root-credentials
               key: password
+        volumeMounts:
+        - name: users-mongo
+          mountPath: /data/db
+      volumes:
+        - name: users-mongo
+          persistentVolumeClaim:
+            claimName: users-mongo-volume-claim

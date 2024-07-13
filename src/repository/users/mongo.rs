@@ -7,26 +7,24 @@ use super::{NewUser, User, UserRepository};
 
 impl UserRepository for MongoDatabase {
     async fn create<'a>(&self, user: NewUser<'a>) -> Result<(), QueryError> {
-        let conn  =  self.connection_pool
+        self.connection_pool
             .get()
-            .await?;
-
-        conn.collection::<_>("users")
+            .await?
+            .collection("users")
             .insert_one(doc! {
                 "id": user.id,
-                "username": user.username
+                "username": user.username,
             })
-            .await?;
-
-        Ok(())
+            .await
+            .map(|_| ())
+            .map_err(QueryError::from)
     }
 
     async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError> {
-        let conn = self.connection_pool
+        let mut cursor = self.connection_pool
             .get()
-            .await?;
-
-        let mut cursor = conn.collection("users")
+            .await?
+            .collection("users")
             .find(match user_ids {
                 Some(user_ids) => doc! { "id": { "$in": user_ids } },
                 None => doc! { },
@@ -43,11 +41,10 @@ impl UserRepository for MongoDatabase {
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<User>, QueryError> {
-        let conn = self.connection_pool
+        self.connection_pool
             .get()
-            .await?;
-
-        conn.collection("users")
+            .await?
+            .collection("users")
             .find_one(doc! {
                 "id": id
             })
@@ -56,24 +53,22 @@ impl UserRepository for MongoDatabase {
     }
 
     async fn get_by_username(&self, username: &str) -> Result<Option<User>, QueryError> {
-        let conn = self.connection_pool
+        self.connection_pool
             .get()
-            .await?;
-
-        conn.collection("users")
+            .await?
+            .collection("users")
             .find_one(doc! {
                 "username": username
             })
             .await
-            .map_err(Into::into)
+            .map_err(QueryError::from)
     }
 
     async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError> {
-        let conn = self.connection_pool
+        self.connection_pool
             .get()
-            .await?;
-
-        conn.collection::<User>("users")
+            .await?
+            .collection::<User>("users")
             .update_one(
                 doc! { "id": user_id },
                 doc! { "$push": { 
@@ -84,8 +79,8 @@ impl UserRepository for MongoDatabase {
                     }
                 }
             )
-            .await?;
-
-        Ok(())
+            .await
+            .map(|_| ())
+            .map_err(QueryError::from)
     }
 }

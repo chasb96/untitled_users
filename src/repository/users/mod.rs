@@ -52,6 +52,7 @@ pub enum UserRepositoryOption {
     Postgres(PostgresDatabase),
     CachedPostgres(UserCachingRepository<PostgresDatabase>),
     Mongo(MongoDatabase),
+    CachedMongo(UserCachingRepository<MongoDatabase>),
 }
 
 impl UserRepository for UserRepositoryOption {
@@ -60,6 +61,7 @@ impl UserRepository for UserRepositoryOption {
             Self::Postgres(pg) => pg.create(user).await,
             Self::CachedPostgres(cached_pg) => cached_pg.create(user).await,
             Self::Mongo(mongo) => mongo.create(user).await,
+            Self::CachedMongo(cached_mongo) => cached_mongo.create(user).await,
         }
     }
     
@@ -68,6 +70,7 @@ impl UserRepository for UserRepositoryOption {
             Self::Postgres(pg) => pg.list(user_ids).await,
             Self::CachedPostgres(cached_pg) => cached_pg.list(user_ids).await,
             Self::Mongo(mongo) => mongo.list(user_ids).await,
+            Self::CachedMongo(cached_mongo) => cached_mongo.list(user_ids).await,
         }
     }
 
@@ -76,6 +79,7 @@ impl UserRepository for UserRepositoryOption {
             Self::Postgres(pg) => pg.get_by_id(id).await,
             Self::CachedPostgres(cached_pg) => cached_pg.get_by_id(id).await,
             Self::Mongo(mongo) => mongo.get_by_id(id).await,
+            Self::CachedMongo(cached_mongo) => cached_mongo.get_by_id(id).await,
         }
     }
 
@@ -84,6 +88,7 @@ impl UserRepository for UserRepositoryOption {
             Self::Postgres(pg) => pg.get_by_username(username).await,
             Self::CachedPostgres(cached_pg) => cached_pg.get_by_username(username).await,
             Self::Mongo(mongo) => mongo.get_by_username(username).await,
+            Self::CachedMongo(cached_mongo) => cached_mongo.get_by_username(username).await,
         }
     }
     
@@ -92,6 +97,7 @@ impl UserRepository for UserRepositoryOption {
             Self::Postgres(pg) => pg.add_project(user_id, project_id, project_name).await,
             Self::CachedPostgres(cached_pg) => cached_pg.add_project(user_id, project_id, project_name).await,
             Self::Mongo(mongo) => mongo.add_project(user_id, project_id, project_name).await,
+            Self::CachedMongo(cached_mongo) => cached_mongo.add_project(user_id, project_id, project_name).await,
         }
     }
 }

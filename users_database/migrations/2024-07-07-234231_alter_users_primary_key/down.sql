@@ -1,4 +1,4 @@
-ALTER TABLE users
+docker build -t 689289bfd7b0db6b706123cfa0b95825_users .ALTER TABLE users
 DROP COLUMN id;
 
 ALTER TABLE users
