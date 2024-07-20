@@ -1,5 +1,6 @@
-use axum::Json;
+use axum::http::HeaderMap;
 use axum::{extract::Query, response::IntoResponse};
+use json_or_protobuf::JsonOrProtobuf;
 use or_status_code::OrInternalServerError;
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,7 @@ use super::ApiResult;
 #[derive(Deserialize)]
 pub struct ListUsersQuery {
     #[serde(rename = "uids")]
-    user_ids: Option<Vec<i32>>,
+    user_ids: Vec<String>,
 }
 
 #[derive(Serialize, Message)]
@@ -34,10 +35,11 @@ pub struct UserResponse {
 
 pub async fn list_users(
     user_repository: UserRepositoryExtractor,
+    headers: HeaderMap,
     Query(query): Query<ListUsersQuery>
 ) -> ApiResult<impl IntoResponse> {
     let users = user_repository
-        .list(query.user_ids)
+        .list(&query.user_ids)
         .await
         .or_internal_server_error()?;
 
@@ -51,5 +53,5 @@ pub async fn list_users(
             .collect(),
     };
 
-    Ok(Json(response_body))
+    Ok(JsonOrProtobuf::from_accept_header(response_body, &headers))
 }

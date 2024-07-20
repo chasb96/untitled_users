@@ -1,4 +1,4 @@
-use crate::repository::metrics::{MetricsRepository, MetricsRepositoryOption};
+use metrics_client::{MetricsClient, ViewUserRequest};
 
 use super::{error::HandleError, Message};
 
@@ -7,9 +7,11 @@ pub struct UserViewed {
 }
 
 impl UserViewed {
-    pub async fn handle(&self) -> Result<(), HandleError> {
-        MetricsRepositoryOption::default()
-            .increment_view_count(&self.id)
+    pub async fn handle(self) -> Result<(), HandleError> {
+        MetricsClient::default()
+            .view_user(ViewUserRequest {
+                user_id: self.id,
+            })
             .await
             .map_err(HandleError::from)
     }

@@ -22,6 +22,7 @@ async-channel = "2.3.1"
 auth_client = { git = "https://github.com/chasb96/untitled_auth_client", default-features = false }
 projects_client = { git = "https://github.com/chasb96/untitled_projects_client", default-features = false }
 search_client = { git = "https://github.com/chasb96/untitled_search_client", default-features = false }
+metrics_client = { git = "https://github.com/chasb96/untitled_metrics_client", default-features = false }
 or_status_code = { git = "https://github.com/chasb96/or_status_code" }
 log_unwrap = { git = "https://github.com/chasb96/log_unwrap" }
 log_layer = { git = "https://github.com/chasb96/log_layer" }

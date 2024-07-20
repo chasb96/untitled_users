@@ -38,7 +38,7 @@ pub struct UserProject {
 pub trait UserRepository {
     async fn create<'a>(&self, user: NewUser<'a>) -> Result<(), QueryError>;
 
-    async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError>;
+    async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError>;
 
     async fn get_by_id(&self, id: &str) -> Result<Option<User>, QueryError>;
 
@@ -65,7 +65,7 @@ impl UserRepository for UserRepositoryOption {
         }
     }
     
-    async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError> {
+    async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError> {
         match self {
             Self::Postgres(pg) => pg.list(user_ids).await,
             Self::CachedPostgres(cached_pg) => cached_pg.list(user_ids).await,

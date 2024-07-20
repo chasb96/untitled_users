@@ -20,7 +20,7 @@ where
             .await
     }
 
-    async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError> {
+    async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError> {
         self.repository
             .list(user_ids)
             .await

@@ -29,11 +29,11 @@ impl UserRepository for PostgresDatabase {
         Ok(id)
     }
 
-    async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError> {
+    async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError> {
         const LIST_QUERY: &'static str = r#"
             SELECT u.id, username
             FROM users u
-            WHERE $1 IS NULL OR u.id = ANY($1)
+            u.id = ANY($1)
         "#;
 
         let mut conn = self.connection_pool

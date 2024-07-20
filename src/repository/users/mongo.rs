@@ -12,7 +12,7 @@ impl UserRepository for MongoDatabase {
             .await?
             .collection("users")
             .insert_one(doc! {
-                "id": user.id,
+                "user_id": user.id,
                 "username": user.username,
             })
             .await
@@ -20,24 +20,16 @@ impl UserRepository for MongoDatabase {
             .map_err(QueryError::from)
     }
 
-    async fn list(&self, user_ids: Option<Vec<i32>>) -> Result<Vec<User>, QueryError> {
-        let mut cursor = self.connection_pool
+    async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError> {
+        self.connection_pool
             .get()
             .await?
             .collection("users")
-            .find(match user_ids {
-                Some(user_ids) => doc! { "id": { "$in": user_ids } },
-                None => doc! { },
-            })
-            .await?;
-
-        let mut users = Vec::new();
-
-        while let Some(user) = cursor.try_next().await? {
-            users.push(user);
-        }
-
-        Ok(users)
+            .find(doc! { "user_id": { "$in": user_ids } })
+            .await?
+            .try_collect()
+            .await
+            .map_err(QueryError::from)
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<User>, QueryError> {
@@ -45,9 +37,7 @@ impl UserRepository for MongoDatabase {
             .get()
             .await?
             .collection("users")
-            .find_one(doc! {
-                "id": id
-            })
+            .find_one(doc! { "user_id": id })
             .await
             .map_err(Into::into)
     }
@@ -57,9 +47,7 @@ impl UserRepository for MongoDatabase {
             .get()
             .await?
             .collection("users")
-            .find_one(doc! {
-                "username": username
-            })
+            .find_one(doc! { "username": username })
             .await
             .map_err(QueryError::from)
     }
@@ -70,7 +58,7 @@ impl UserRepository for MongoDatabase {
             .await?
             .collection::<User>("users")
             .update_one(
-                doc! { "id": user_id },
+                doc! { "user_id": user_id },
                 doc! { "$push": { 
                         "projects": {
                             "project_id": project_id,

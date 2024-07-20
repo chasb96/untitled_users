@@ -25,12 +25,12 @@ spec:
         - name: MONGO_INITDB_ROOT_USERNAME
           valueFrom:
             secretKeyRef:
-              name: mongo-root-credentials
+              name: users-mongo-credentials
               key: username
         - name: MONGO_INITDB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mongo-root-credentials
+              name: users-mongo-credentials
               key: password
         volumeMounts:
         - name: users-mongo
