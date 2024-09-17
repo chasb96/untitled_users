@@ -71,31 +71,6 @@ where
 
         Ok(None)
     }
-
-    async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError> {
-        self.repository
-            .add_project(user_id, project_id, project_name)
-            .await?;
-
-        let user = self.repository
-            .get_by_id(user_id)
-            .await?;
-
-        let user = match user {
-            Some(user) => user,
-            None => return Ok(()),
-        };
-
-        let mut conn = self.cache
-            .connection_pool
-            .get()
-            .await?;
-
-        let _: () = conn.del(format!("user:{}", user.username)).await?;
-        let _: () = conn.del(format!("user:{}", user.id)).await?;
-
-        Ok(())
-    }
 }
 
 impl<T> Default for UserCachingRepository<T> 

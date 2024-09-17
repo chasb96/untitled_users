@@ -12,27 +12,16 @@ pub const USERS_ID_LENGTH: usize = 16;
 
 #[derive(Serialize)]
 pub struct NewUser<'a> {
-    pub id: &'a str,
+    pub user_id: &'a str,
     pub username: &'a str,
 }
 
 #[derive(Clone, Deserialize, Serialize, Message)]
 pub struct User {
     #[prost(string, tag = "1")]
-    pub id: String,
+    pub user_id: String,
     #[prost(string, tag = "2")]
     pub username: String,
-    #[prost(message, repeated, tag = "3")]
-    #[serde(default)]
-    pub projects: Vec<UserProject>,
-}
-
-#[derive(Clone, Deserialize, Serialize, Message)]
-pub struct UserProject {
-    #[prost(string, tag = "1")]
-    pub project_id: String,
-    #[prost(string, tag = "2")]
-    pub project_name: String,
 }
 
 pub trait UserRepository {
@@ -43,8 +32,6 @@ pub trait UserRepository {
     async fn get_by_id(&self, id: &str) -> Result<Option<User>, QueryError>;
 
     async fn get_by_username(&self, username: &str) -> Result<Option<User>, QueryError>;
-
-    async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError>;
 }
 
 #[allow(dead_code)]
@@ -89,15 +76,6 @@ impl UserRepository for UserRepositoryOption {
             Self::CachedPostgres(cached_pg) => cached_pg.get_by_username(username).await,
             Self::Mongo(mongo) => mongo.get_by_username(username).await,
             Self::CachedMongo(cached_mongo) => cached_mongo.get_by_username(username).await,
-        }
-    }
-    
-    async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError> {
-        match self {
-            Self::Postgres(pg) => pg.add_project(user_id, project_id, project_name).await,
-            Self::CachedPostgres(cached_pg) => cached_pg.add_project(user_id, project_id, project_name).await,
-            Self::Mongo(mongo) => mongo.add_project(user_id, project_id, project_name).await,
-            Self::CachedMongo(cached_mongo) => cached_mongo.add_project(user_id, project_id, project_name).await,
         }
     }
 }

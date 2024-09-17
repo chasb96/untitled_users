@@ -1,10 +1,9 @@
 use axum::response::IntoResponse;
 use axum::http::StatusCode;
-use json_or_protobuf::JsonOrProtobuf;
+use axum_extra::protobuf::Protobuf;
 use or_status_code::OrInternalServerError;
 use prost::Message;
 use rand::distributions::{Alphanumeric, DistString};
-use serde::{Deserialize, Serialize};
 
 use crate::axum::extractors::message_queue::MessageQueueExtractor;
 use crate::axum::extractors::user_repository::UserRepositoryExtractor;
@@ -13,16 +12,14 @@ use crate::repository::users::{NewUser, UserRepository, USERS_ID_LENGTH};
 
 use super::ApiResult;
 
-#[derive(Deserialize, Message)]
+#[derive(Message)]
 pub struct CreateUserRequest {
-    #[serde(rename = "u")]
     #[prost(string, tag = "1")]
     pub username: String,
 }
 
-#[derive(Serialize, Message)]
+#[derive(Message)]
 pub struct CreateUserResponse {
-    #[serde(rename = "uid")]
     #[prost(string, tag = "1")]
     pub id: String,
 }
@@ -30,10 +27,8 @@ pub struct CreateUserResponse {
 pub async fn create_user(
     user_repository: UserRepositoryExtractor,
     message_queue: MessageQueueExtractor,
-    request: JsonOrProtobuf<CreateUserRequest>,
+    Protobuf(request): Protobuf<CreateUserRequest>,
 ) -> ApiResult<impl IntoResponse> {
-    let (request, content_type) = request.decompose();
-
     let existing = user_repository
         .get_by_username(&request.username)
         .await
@@ -47,7 +42,7 @@ pub async fn create_user(
 
     user_repository
         .create(NewUser {
-            id: &user_id,
+            user_id: &user_id,
             username: &request.username,
         })
         .await
@@ -60,10 +55,9 @@ pub async fn create_user(
         })
         .await;
 
-    Ok(JsonOrProtobuf::new(
+    Ok(Protobuf(
         CreateUserResponse {
             id: user_id,
-        },
-        &content_type
-    ).unwrap())
+        }
+    ))
 }

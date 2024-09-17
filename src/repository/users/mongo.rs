@@ -12,7 +12,7 @@ impl UserRepository for MongoDatabase {
             .await?
             .collection("users")
             .insert_one(doc! {
-                "user_id": user.id,
+                "user_id": user.user_id,
                 "username": user.username,
             })
             .await
@@ -49,26 +49,6 @@ impl UserRepository for MongoDatabase {
             .collection("users")
             .find_one(doc! { "username": username })
             .await
-            .map_err(QueryError::from)
-    }
-
-    async fn add_project(&self, user_id: &str, project_id: &str, project_name: &str) -> Result<(), QueryError> {
-        self.connection_pool
-            .get()
-            .await?
-            .collection::<User>("users")
-            .update_one(
-                doc! { "user_id": user_id },
-                doc! { "$push": { 
-                        "projects": {
-                            "project_id": project_id,
-                            "project_name": project_name
-                        }
-                    }
-                }
-            )
-            .await
-            .map(|_| ())
             .map_err(QueryError::from)
     }
 }

@@ -1,93 +1,52 @@
-use auth_client::axum::extractors::{Authenticate, ClaimsUser};
 use axum::extract::Path;
-use axum::{http::StatusCode, Json};
+use axum::http::StatusCode;
+use axum_extra::protobuf::Protobuf;
 use or_status_code::{OrInternalServerError, OrNotFound};
-use serde::Serialize;
+use prost::Message;
 
-use crate::axum::extractors::message_queue::MessageQueueExtractor;
 use crate::axum::extractors::user_repository::UserRepositoryExtractor;
-use crate::message_queue::UserViewed;
 use crate::repository::users::UserRepository;
 
-#[derive(Serialize)]
+#[derive(Message)]
 pub struct GetUserResponse {
+    #[prost(string, tag = "1")]
     pub id: String,
+    #[prost(string, tag = "2")]
     pub username: String,
-    pub projects: Vec<UserProjectResponse>,
-}
-
-#[derive(Serialize)]
-pub struct UserProjectResponse {
-    pub project_id: String,
-    pub project_name: String,
 }
 
 pub async fn get_by_id(
     user_repository: UserRepositoryExtractor,
-    Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
-    message_queue: MessageQueueExtractor,
     Path(id): Path<String>
-) -> Result<Json<GetUserResponse>, StatusCode> {
+) -> Result<Protobuf<GetUserResponse>, StatusCode> {
     let user = user_repository
         .get_by_id(&id)
         .await
         .or_internal_server_error()?
         .or_not_found()?;
 
-    if claims_user.is_none() || claims_user.unwrap().id != user.id.clone() {
-        message_queue
-            .send(UserViewed {
-                id: user.id.clone(),
-            })
-            .await;
-    } 
-
-    Ok(Json(
+    Ok(Protobuf(
         GetUserResponse {
-            id: user.id,
+            id: user.user_id,
             username: user.username,
-            projects: user.projects
-                .into_iter()
-                .map(|project| UserProjectResponse {
-                    project_id: project.project_id,
-                    project_name: project.project_name,
-                })
-                .collect()
         }
     ))
 }
 
 pub async fn get_by_username(
     user_repository: UserRepositoryExtractor,
-    Authenticate(claims_user): Authenticate<Option<ClaimsUser>>,
-    metrics_queue: MessageQueueExtractor,
     Path(username): Path<String>
-) -> Result<Json<GetUserResponse>, StatusCode> {
+) -> Result<Protobuf<GetUserResponse>, StatusCode> {
     let user = user_repository
         .get_by_username(&username)
         .await
         .or_internal_server_error()?
         .or_not_found()?;
 
-    if claims_user.is_none() || claims_user.unwrap().id != user.id.clone() {
-        metrics_queue
-            .send(UserViewed {
-                id: user.id.clone(),
-            })
-            .await;
-    } 
-
-    Ok(Json(
+    Ok(Protobuf(
         GetUserResponse {
-            id: user.id,
+            id: user.user_id,
             username: user.username,
-            projects: user.projects
-                .into_iter()
-                .map(|project| UserProjectResponse {
-                    project_id: project.project_id,
-                    project_name: project.project_name,
-                })
-                .collect()
         }
     ))
 }
