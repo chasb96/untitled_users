@@ -13,6 +13,8 @@ pub struct GetUserResponse {
     pub id: String,
     #[prost(string, tag = "2")]
     pub username: String,
+    #[prost(optional, string, tag = "3")]
+    pub profile_picture: Option<String>,
 }
 
 pub async fn get_by_id(
@@ -29,6 +31,7 @@ pub async fn get_by_id(
         GetUserResponse {
             id: user.user_id,
             username: user.username,
+            profile_picture: user.profile_picture,
         }
     ))
 }
@@ -47,6 +50,7 @@ pub async fn get_by_username(
         GetUserResponse {
             id: user.user_id,
             username: user.username,
+            profile_picture: user.profile_picture,
         }
     ))
 }

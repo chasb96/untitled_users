@@ -20,6 +20,25 @@ impl UserRepository for MongoDatabase {
             .map_err(QueryError::from)
     }
 
+    async fn update(&self, user: &User) -> Result<(), QueryError> {
+        self.connection_pool
+            .get()
+            .await?
+            .collection::<User>("users")
+            .update_one(
+                doc! { "user_id": &user.user_id }, 
+                doc! {
+                    "$set": {
+                        "username": &user.username,
+                        "profile_picture": &user.profile_picture,
+                    }
+                }
+            )
+            .await
+            .map(|_| ())
+            .map_err(QueryError::from)
+    }
+
     async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError> {
         self.connection_pool
             .get()

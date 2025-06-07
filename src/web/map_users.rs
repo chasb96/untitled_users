@@ -9,6 +9,7 @@ use crate::axum::extractors::user_repository::UserRepositoryExtractor;
 use crate::repository::users::UserRepository;
 
 use super::ApiResult;
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 pub struct ListUsersQuery {
@@ -17,22 +18,20 @@ pub struct ListUsersQuery {
 }
 
 #[derive(Message)]
-pub struct ListUsersResponse {
-    #[prost(message, repeated, tag = "1")]
-    users: Vec<UserResponse>,
+pub struct MapUsersResponse {
+    #[prost(map = "string, message", tag = "1")]
+    users: HashMap<String, UserResponse>,
 }
 
-#[derive(Message)]
+#[derive(Message, PartialEq)]
 pub struct UserResponse {
     #[prost(string, tag = "1")]
-    id: String,
-    #[prost(string, tag = "2")]
     username: String,
-    #[prost(optional, string, tag = "3")]
+    #[prost(optional, string, tag = "2")]
     profile_picture: Option<String>,
 }
 
-pub async fn list_users(
+pub async fn map_users(
     user_repository: UserRepositoryExtractor,
     Query(query): Query<ListUsersQuery>
 ) -> ApiResult<impl IntoResponse> {
@@ -41,14 +40,16 @@ pub async fn list_users(
         .await
         .or_internal_server_error()?;
 
-    let response_body = ListUsersResponse {
+    let response_body = MapUsersResponse {
         users: users
             .into_iter()
-            .map(|user| UserResponse {
-                id: user.user_id,
-                username: user.username,
-                profile_picture: user.profile_picture,
-            })
+            .map(|user| (
+                user.user_id, 
+                UserResponse { 
+                    username: user.username, 
+                    profile_picture: user.profile_picture,
+                }
+            ))
             .collect(),
     };
 

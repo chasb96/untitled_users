@@ -16,6 +16,8 @@ use super::ApiResult;
 pub struct CreateUserRequest {
     #[prost(string, tag = "1")]
     pub username: String,
+    #[prost(optional, string, tag = "2")]
+    pub profile_picture: Option<String>,
 }
 
 #[derive(Message)]
@@ -44,6 +46,7 @@ pub async fn create_user(
         .create(NewUser {
             user_id: &user_id,
             username: &request.username,
+            profile_picture: request.profile_picture.as_deref(),
         })
         .await
         .or_internal_server_error()?;

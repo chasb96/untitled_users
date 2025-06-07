@@ -20,6 +20,21 @@ where
             .await
     }
 
+    async fn update(&self, user: &User) -> Result<(), QueryError> {
+        let cache_key = format!("user:{}", user.user_id);
+
+        let mut conn = self.cache
+            .connection_pool
+            .get()
+            .await?;
+
+        let _: () = conn.del(&cache_key).await?;
+
+        self.repository
+            .update(user)
+            .await
+    }
+
     async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError> {
         self.repository
             .list(user_ids)

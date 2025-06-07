@@ -14,6 +14,7 @@ pub const USERS_ID_LENGTH: usize = 16;
 pub struct NewUser<'a> {
     pub user_id: &'a str,
     pub username: &'a str,
+    pub profile_picture: Option<&'a str>,
 }
 
 #[derive(Clone, Deserialize, Serialize, Message)]
@@ -22,10 +23,14 @@ pub struct User {
     pub user_id: String,
     #[prost(string, tag = "2")]
     pub username: String,
+    #[prost(optional, string, tag = "3")]
+    pub profile_picture: Option<String>,
 }
 
 pub trait UserRepository {
     async fn create<'a>(&self, user: NewUser<'a>) -> Result<(), QueryError>;
+
+    async fn update(&self, user: &User) -> Result<(), QueryError>;
 
     async fn list(&self, user_ids: &Vec<String>) -> Result<Vec<User>, QueryError>;
 
@@ -49,6 +54,15 @@ impl UserRepository for UserRepositoryOption {
             Self::CachedPostgres(cached_pg) => cached_pg.create(user).await,
             Self::Mongo(mongo) => mongo.create(user).await,
             Self::CachedMongo(cached_mongo) => cached_mongo.create(user).await,
+        }
+    }
+
+    async fn update(&self, user: &User) -> Result<(), QueryError> {
+        match self {
+            Self::Postgres(pg) => pg.update(user).await,
+            Self::CachedPostgres(cached_pg) => cached_pg.update(user).await,
+            Self::Mongo(mongo) => mongo.update(user).await,
+            Self::CachedMongo(cached_mongo) => cached_mongo.update(user).await,
         }
     }
     
